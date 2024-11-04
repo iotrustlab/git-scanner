@@ -342,6 +342,16 @@ def export_stats(stats, format='csv', filename=None):
         print(f"\n❌ Error exporting statistics: {str(e)}")
         return None
 
+def get_resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch GitHub repository statistics")
     parser.add_argument("owner", help="Repository owner/organization")

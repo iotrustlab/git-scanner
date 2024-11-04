@@ -91,3 +91,22 @@ Options:
 - Python 3.8+
 - GitHub Token (public_repo or repo scope)
 - Required packages in requirements.txt
+
+## Building from Source
+
+### Prerequisites
+- Python 3.8+
+- Virtual environment (recommended)
+
+### Build Steps
+Windows:
+```batch
+.\build.bat
+
+macOS/Linux:
+```bash
+chmod +x build.sh
+./build.sh
+```
+
+The executable will be generated in the `release/` directory.
