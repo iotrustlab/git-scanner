@@ -11,31 +11,38 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        
+        python-version: ['3.8']
+
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
-        
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip wheel setuptools
         pip install -r requirements.txt
         
     - name: Build executable
       run: python build.py
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: git-scanner-${{ matrix.os }}
         path: release/*
         
     - name: Create Release
+      uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')
-      uses: softprops/action-gh-release@v1
       with:
         files: release/*
+        token: ${{ secrets.GITHUB_TOKEN }}
+        draft: false
+        prerelease: false
