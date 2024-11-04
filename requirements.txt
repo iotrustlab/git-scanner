@@ -1,21 +1,15 @@
 # Core dependencies
-requests>=2.31.0
-humanize>=3.14.0
-pandas>=1.5.3,<2.0.0  # Last version supporting Python 3.8
-numpy>=1.24.3         # Last version supporting Python 3.8
-tabulate>=0.9.0
-tqdm>=4.65.0
+requests==2.31.0
+humanize==4.9.0
+pandas==1.5.3
+numpy==1.24.3
+tabulate==0.9.0
+tqdm==4.66.1
 
 # Export formats
-openpyxl>=3.1.2
+openpyxl==3.1.2
 
 # Build dependencies
-pyinstaller>=6.2.0
-wheel>=0.44.0
-setuptools>=75.3.0
-
-# Remove specific versions for compatibility
-certifi
-charset-normalizer
-idna
-urllib3
+pyinstaller==6.3.0
+wheel==0.41.3
+setuptools==68.2.2
