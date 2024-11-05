@@ -37,9 +37,9 @@ def build_executable():
 
     if src.exists():
         shutil.copy2(src, dst)
-        print(f"\n✅ Built {dst}")
+        print(f"\n[✓] Built {dst}")
     else:
-        print("\n❌ Build failed - executable not found")
+        print("\n[!] Build failed - executable not found")
         sys.exit(1)
 
 if __name__ == '__main__':
