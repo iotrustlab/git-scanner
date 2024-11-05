@@ -49,9 +49,11 @@ def build_executable():
 
     if src.exists():
         shutil.copy2(src, dst)
-        print(f"\n✅ Built {dst}")
+        success_mark = '[✓]' if sys.platform != 'win32' else '[OK]'
+        print (f"\n{success_mark} Built {dst}")
     else:
-        print("\n❌ Build failed - executable not found")
+        failed_mark = '[X]' if sys.platform != 'win32' else '[FAILED]'
+        print(f"\n{failed_mark} Build failed - executable not found")
         sys.exit(1)
 
 if __name__ == '__main__':

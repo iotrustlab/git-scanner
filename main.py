@@ -16,7 +16,7 @@ class GitHubAuth:
     def get_token():
         token = os.environ.get('GITHUB_TOKEN')
         if not token:
-            print("\n❌ No GITHUB_TOKEN environment variable found.")
+            print("\n[X] No GITHUB_TOKEN environment variable found.")
             print("Either:")
             print("1. Set the environment variable: export GITHUB_TOKEN='your_token'")
             print("2. Or provide token via argument: --token YOUR_TOKEN")
@@ -339,7 +339,7 @@ def export_stats(stats, format='csv', filename=None):
         print(f"\n📁 Statistics exported to {output_file}")
         
     except Exception as e:
-        print(f"\n❌ Error exporting statistics: {str(e)}")
+        print(f"\n[X] Error exporting statistics: {str(e)}")
         return None
 
 def get_resource_path(relative_path):
@@ -372,13 +372,13 @@ def main():
             print(f"\nFetching statistics for {args.owner}/{args.repo}...")
             stats = [github_stats.get_repo_stats(args.owner, args.repo)]
             if not stats[0]:
-                print(f"❌ Failed to fetch statistics for {args.owner}/{args.repo}")
+                print(f"[X] Failed to fetch statistics for {args.owner}/{args.repo}")
                 sys.exit(1)
         else:
             print(f"\nFetching repository list for {args.owner}...")
             repos = github_stats.get_all_repos(args.owner, include_private=args.private)
             if not repos:
-                print(f"❌ No repositories found for {args.owner}")
+                print(f"[X] No repositories found for {args.owner}")
                 sys.exit(1)
                 
             print(f"Found {len(repos)} repositories")
@@ -409,17 +409,17 @@ def main():
             if args.format:
                 export_stats(stats, format=args.format, filename=args.output)
         else:
-            print("❌ No statistics available to display")
+            print("[X] No statistics available to display")
             sys.exit(1)
             
     except requests.exceptions.RequestException as e:
-        print(f"\n❌ Error: {str(e)}")
+        print(f"\n[X] Error: {str(e)}")
         sys.exit(1)
     except KeyboardInterrupt:
         print("\n\n⚠️ Operation cancelled by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Unexpected error: {str(e)}")
+        print(f"\n[X] Unexpected error: {str(e)}")
         sys.exit(1)
 
 if __name__ == "__main__":
