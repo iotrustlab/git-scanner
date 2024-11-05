@@ -166,3 +166,6 @@ build/
 dist/
 release/
 *.spec
+
+#export 
+export.*
