@@ -11,12 +11,25 @@ def build_executable():
         if os.path.exists(dir):
             shutil.rmtree(dir)
 
+    # Determine platform suffix
+    if sys.platform == 'win32':
+        platform = 'windows'
+    elif sys.platform == 'darwin':
+        platform = 'macos'
+    else:
+        platform = 'linux'
+
+    # Base executable name
+    exe_name = f'git-scanner-{platform}'
+    if platform == 'windows':
+        exe_name += '.exe'
+
     # PyInstaller command
     cmd = [
         'pyinstaller',
         '--onefile',
         '--clean',
-        '--name', 'git-scanner',
+        '--name', exe_name,
         '--add-data', f'README.md{os.pathsep}.',
         'main.py'
     ]
@@ -31,15 +44,14 @@ def build_executable():
     release_dir = Path('release')
     release_dir.mkdir(exist_ok=True)
 
-    executable = 'git-scanner.exe' if sys.platform == 'win32' else 'git-scanner'
-    src = Path('dist') / executable
-    dst = release_dir / executable
+    src = Path('dist') / exe_name
+    dst = release_dir / exe_name
 
     if src.exists():
         shutil.copy2(src, dst)
-        print(f"\n[✓] Built {dst}")
+        print(f"\n✅ Built {dst}")
     else:
-        print("\n[!] Build failed - executable not found")
+        print("\n❌ Build failed - executable not found")
         sys.exit(1)
 
 if __name__ == '__main__':
