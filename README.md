@@ -1,112 +1,124 @@
 # git-scanner
 
-A fast and efficient CLI tool to scan and analyze GitHub repositories.
+A friendly CLI tool that helps you analyze GitHub repositories and their issues. Perfect for getting insights into repository health and activity.
 
-## 🚀 Get Started
+## Quick Start
 
 ```bash
-# Setup virtual environment
+# Set up your environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows: `.venv\Scripts\activate`
+source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
 
-# Install dependencies
+# Install what you need
 pip install -r requirements.txt
 
 # Set your GitHub token
 export GITHUB_TOKEN='your_github_token'
 
-# Scan a repository
+# Try it out!
+python git_scanner.py microsoft/vscode  # Look at a specific repo
+python git_scanner.py microsoft         # Check all repos in an organization
+```
+
+## What Can It Do?
+
+### Repository Analysis
+
+```bash
+# Basic repo scanning
 python git_scanner.py microsoft/vscode
 
-# Scan all repositories of an organization
-python git_scanner.py microsoft
-```
+# Get stats for all repos and save to Excel
+python git_scanner.py microsoft --format excel --output microsoft_stats
 
-## Setup Guide
-
-1. **Python Environment:**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: `.venv\Scripts\activate`
-   ```
-
-2. **Dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **GitHub Token:**
-   - Create a token at: GitHub → Settings → Developer settings → Tokens (classic)
-   - Set it in your environment:
-     ```bash
-     export GITHUB_TOKEN='your_token'
-     ```
-
-## Usage Examples
-
-Scan a specific repository:
-```bash
-python git_scanner.py microsoft/vscode
-```
-
-Scan all repositories and export to CSV:
-```bash
-python git_scanner.py microsoft --format csv --output microsoft_repos
-```
-
-Include private repositories:
-```bash
+# Include private repos (if your token has access)
 python git_scanner.py microsoft --private
 ```
 
-## Options
+### Issue Tracking (New!)
 
 ```bash
-python git_scanner.py [owner] [options]
+# See all issues in a repo
+python git_scanner.py microsoft/vscode --repo vscode --issues
 
-Options:
-  --repo REPO     Target specific repository
-  --format        Output format: table, csv, json, excel (default: table)
-  --output        Custom output filename
-  --private       Include private repositories
-  --token         Override GitHub token
+# Export issues to a folder
+python git_scanner.py microsoft/vscode --repo vscode --issues --output vscode_issues
 ```
 
-## Output Formats
+## Output Options
 
-- **Table:** Clean console output (default)
-- **CSV:** Comma-separated values
-- **JSON:** Structured data format
-- **Excel:** Multi-sheet workbook
+You can get your results in several formats:
 
-## Repository Stats
+- **Table**: Nice clean console output (default)
+- **CSV**: Good for spreadsheets
+- **JSON**: Perfect for data processing
+- **Excel**: Professional reports with auto-formatted columns
 
-- Basic: Stars, forks, watchers
-- Activity: Last commit, open issues
-- Meta: Language, license, visibility
-- Size and creation date
+For issues, you'll get:
 
-## Requirements
+- A metadata summary
+- NDJSON file with issue details
+- Separate folders for large issue content
 
-- Python 3.8+
-- GitHub Token (public_repo or repo scope)
-- Required packages in requirements.txt
+## What You'll See
 
-## Building from Source
+### Repository Stats
 
-### Prerequisites
-- Python 3.8+
-- Virtual environment (recommended)
+- Stars, forks, and watchers
+- Open/closed issues and PRs
+- Average time to resolve issues
+- Latest activity timestamps
+- Languages used
+- Repository size
+- License info
 
-### Build Steps
-Windows:
-```batch
-.\build.bat
+### Issue Details (New!)
 
-macOS/Linux:
+- Issue status (open/closed)
+- Creation and update dates
+- Labels and assignees
+- Full issue descriptions
+- Comment counts
+- Issue URLs
+
+## Setting Up
+
+1. You'll need:
+   - Python 3.8 or newer
+   - A GitHub token (get it from GitHub → Settings → Developer settings → Tokens)
+
+2. Set up your token:
+
+   ```bash
+   export GITHUB_TOKEN='your_token'
+   # or use it directly:
+   python git_scanner.py microsoft --token your_token
+   ```
+
+## Common Commands
+
 ```bash
-chmod +x build.sh
-./build.sh
+# Basic repository scanning
+python git_scanner.py microsoft/vscode
+
+# All commands available
+python git_scanner.py --help
+
+# Repository stats with different outputs
+python git_scanner.py microsoft --format csv
+python git_scanner.py microsoft --format json
+python git_scanner.py microsoft --format excel
+
+# Working with issues
+python git_scanner.py microsoft/vscode --repo vscode --issues
 ```
 
-The executable will be generated in the `release/` directory.
+## Tips
+
+- Use `--private` if you need to see private repositories
+- The tool handles rate limiting automatically
+- For large organizations, be patient - it'll fetch everything systematically
+- Issue exports are organized to handle large amounts of content
+- Use `Ctrl+C` to stop if you need to
+
+That's it! The tool aims to be simple but powerful. If you run into any problems or need help, feel free to open an issue on GitHub.

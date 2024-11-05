@@ -6,6 +6,7 @@ import os
 import sys
 import pandas as pd
 from tabulate import tabulate
+import json
 import concurrent.futures
 from tqdm import tqdm
 from statistics import mean, median
@@ -205,6 +206,62 @@ class GitHubStats:
         except Exception as e:
             print(f"Error fetching stats for {owner}/{repo}: {str(e)}")
             return None
+    
+    def get_repository_issues(self, owner, repo):
+        """Get all issues for a specific repository."""
+        if '/' in owner:
+            owner, repo = owner.split('/')
+        
+        try:
+            issues_url = f"{self.base_url}/repos/{owner}/{repo}/issues"
+            all_issues = []
+            page = 1
+            
+            while True:
+                params = {
+                    'state': 'all',
+                    'page': page,
+                    'per_page': 100,
+                    'sort': 'created',
+                    'direction': 'desc'
+                }
+                
+                response = requests.get(issues_url, headers=self.headers, params=params)
+                response.raise_for_status()
+                
+                issues = response.json()
+                if not issues:
+                    break
+                    
+                # Filter out pull requests
+                issues = [issue for issue in issues if 'pull_request' not in issue]
+                all_issues.extend(issues)
+                page += 1
+            
+            # Process each issue into a more manageable format
+            processed_issues = []
+            for issue in all_issues:
+                processed_issue = {
+                    'number': issue['number'],
+                    'title': issue['title'],
+                    'state': issue['state'],
+                    'created_at': issue['created_at'],
+                    'updated_at': issue['updated_at'],
+                    'closed_at': issue['closed_at'],
+                    'author': issue['user']['login'],
+                    'labels': ','.join([label['name'] for label in issue['labels']]),
+                    'comments': issue['comments'],
+                    'url': issue['html_url'],
+                    'body': issue['body'] if issue['body'] else '',
+                    'assignees': ','.join([assignee['login'] for assignee in issue['assignees']]),
+                }
+                processed_issues.append(processed_issue)
+                
+            return processed_issues
+            
+        except Exception as e:
+            print(f"Error fetching issues for {owner}/{repo}: {str(e)}")
+            return None
 
 def format_number(num):
     """Format numbers for better readability."""
@@ -352,65 +409,203 @@ def get_resource_path(relative_path):
     
     return os.path.join(base_path, relative_path)
 
+def display_issues(issues):
+    """Display repository issues in a clean, compact format."""
+    if not issues:
+        print("No issues found.")
+        return
+
+    # Create table data
+    table_data = []
+    for issue in issues:
+        created_date = datetime.strptime(issue['created_at'], "%Y-%m-%dT%H:%M:%SZ").strftime("%Y-%m-%d")
+        state_icon = "🟢" if issue['state'] == 'open' else "⚫"
+        
+        table_data.append([
+            f"#{issue['number']}",
+            state_icon,
+            issue['title'][:80] + ('...' if len(issue['title']) > 80 else ''),
+            created_date
+        ])
+
+    headers = ["Number", "State", "Title", "Created"]
+
+    print("\nRepository Issues")
+    print(tabulate(
+        table_data,
+        headers=headers,
+        tablefmt="simple",
+        numalign="right",
+        stralign="left"
+    ))
+
+    # Summary statistics
+    open_issues = sum(1 for issue in issues if issue['state'] == 'open')
+    closed_issues = sum(1 for issue in issues if issue['state'] == 'closed')
+    
+    print(f"\nTotal Issues: {len(issues)} (🟢 {open_issues} open, ⚫ {closed_issues} closed)")
+
+def export_issues(issues, output_path):
+    """Export repository issues with proper handling of large content."""
+    if not issues:
+        print("No issues to export.")
+        return
+
+    try:
+        # Create the output directory
+        os.makedirs(output_path, exist_ok=True)
+        
+        # Store metadata separately
+        metadata = {
+            "exported_at": datetime.now(timezone.utc).isoformat(),
+            "total_issues": len(issues),
+            "open_issues": sum(1 for issue in issues if issue['state'] == 'open'),
+            "closed_issues": sum(1 for issue in issues if issue['state'] == 'closed')
+        }
+        
+        with open(os.path.join(output_path, "metadata.json"), 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=2, ensure_ascii=False)
+
+        # Export each issue as a separate file using NDJSON
+        with open(os.path.join(output_path, "issues.ndjson"), 'w', encoding='utf-8') as f:
+            for issue in issues:
+                # Create a directory for this issue's content
+                issue_dir = os.path.join(output_path, f"issue_{issue['number']}")
+                os.makedirs(issue_dir, exist_ok=True)
+                
+                # Store the full body content separately
+                if issue['body']:
+                    body_file = os.path.join(issue_dir, "body.md")
+                    with open(body_file, 'w', encoding='utf-8') as bf:
+                        bf.write(issue['body'])
+                
+                # Create the issue record with a reference to the body file
+                issue_record = {
+                    "number": issue['number'],
+                    "title": issue['title'],
+                    "state": issue['state'],
+                    "timestamps": {
+                        "created_at": issue['created_at'],
+                        "updated_at": issue['updated_at'],
+                        "closed_at": issue['closed_at']
+                    },
+                    "author": issue['author'],
+                    "labels": issue['labels'].split(',') if issue['labels'] else [],
+                    "assignees": issue['assignees'].split(',') if issue['assignees'] else [],
+                    "comments": issue['comments'],
+                    "url": issue['url'],
+                    "body_file": f"issue_{issue['number']}/body.md" if issue['body'] else None
+                }
+                
+                # Write the issue record as a single line in NDJSON format
+                f.write(json.dumps(issue_record, ensure_ascii=False) + '\n')
+        
+        print(f"\n📁 Issues exported to {output_path}/")
+        print(f"├── metadata.json (export information)")
+        print(f"├── issues.ndjson (issue records)")
+        print(f"└── issue_* directories (containing issue bodies)")
+        
+    except Exception as e:
+        print(f"\n[X] Error exporting issues: {str(e)}")
+        return None
+
 def main():
     parser = argparse.ArgumentParser(description="Fetch GitHub repository statistics")
     parser.add_argument("owner", help="Repository owner/organization")
     parser.add_argument("--repo", help="Specific repository name (optional)")
     parser.add_argument("--token", help="GitHub personal access token")
-    parser.add_argument("--format", choices=['csv', 'json', 'excel'], help="Export format")
-    parser.add_argument("--output", help="Output filename (without extension)")
     parser.add_argument("--private", action="store_true", 
                        help="Include private repositories (requires appropriate token permissions)")
     
-    args = parser.parse_args()
+    # Create a group for repository stats options
+    stats_group = parser.add_argument_group('repository stats options')
+    stats_group.add_argument("--format", choices=['csv', 'json', 'excel'],
+                          help="Export format for repository statistics")
     
+    # Create a group for issues options
+    issues_group = parser.add_argument_group('issues options')
+    issues_group.add_argument("--issues", action="store_true",
+                           help="Fetch issues for the specified repository (requires --repo)")
+    
+    # Make output optional and independent
+    parser.add_argument("--output", nargs='?', const='default',
+                     help="Output path (optional). For stats: filename without extension; for issues: directory path")
+
+    args = parser.parse_args()
+
     try:
         token = args.token or GitHubAuth.get_token()
         github_stats = GitHubStats(token)
-        
-        if args.repo:
-            print(f"\nFetching statistics for {args.owner}/{args.repo}...")
-            stats = [github_stats.get_repo_stats(args.owner, args.repo)]
-            if not stats[0]:
-                print(f"[X] Failed to fetch statistics for {args.owner}/{args.repo}")
-                sys.exit(1)
-        else:
-            print(f"\nFetching repository list for {args.owner}...")
-            repos = github_stats.get_all_repos(args.owner, include_private=args.private)
-            if not repos:
-                print(f"[X] No repositories found for {args.owner}")
-                sys.exit(1)
-                
-            print(f"Found {len(repos)} repositories")
-            
-            # Fetch stats for all repositories
-            with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-                future_to_repo = {
-                    executor.submit(
-                        github_stats.get_repo_stats, 
-                        repo["owner"]["login"], 
-                        repo["name"]
-                    ): repo for repo in repos
-                }
-                
-                stats = []
-                with tqdm(total=len(repos), desc="Fetching repository stats") as pbar:
-                    for future in concurrent.futures.as_completed(future_to_repo):
-                        repo_stats = future.result()
-                        if repo_stats:
-                            stats.append(repo_stats)
-                        pbar.update(1)
 
-        # Display stats
-        if stats:
-            display_stats(stats)
+        if args.issues:
+            if not args.repo:
+                print("[X] Error: --issues requires --repo parameter")
+                sys.exit(1)
             
-            # Export if format is specified
-            if args.format:
-                export_stats(stats, format=args.format, filename=args.output)
+            print(f"\nFetching issues for {args.owner}/{args.repo}...")
+            issues = github_stats.get_repository_issues(args.owner, args.repo)
+            
+            if issues:
+                display_issues(issues)
+                
+                # Export if --output was used
+                if args.output is not None:
+                    # Generate default output path if --output was used without value
+                    if args.output == 'default':
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        output_path = f"github_issues_{timestamp}"
+                    else:
+                        output_path = args.output
+                        
+                    export_issues(issues, output_path)
+            else:
+                print("[X] No issues found")
+                sys.exit(1)
+                
         else:
-            print("[X] No statistics available to display")
-            sys.exit(1)
+            # Repository stats logic
+            if args.repo:
+                print(f"\nFetching statistics for {args.owner}/{args.repo}...")
+                stats = [github_stats.get_repo_stats(args.owner, args.repo)]
+                if not stats[0]:
+                    print(f"[X] Failed to fetch statistics for {args.owner}/{args.repo}")
+                    sys.exit(1)
+            else:
+                print(f"\nFetching repository list for {args.owner}...")
+                repos = github_stats.get_all_repos(args.owner, include_private=args.private)
+                if not repos:
+                    print(f"[X] No repositories found for {args.owner}")
+                    sys.exit(1)
+                    
+                print(f"Found {len(repos)} repositories")
+                
+                with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+                    future_to_repo = {
+                        executor.submit(
+                            github_stats.get_repo_stats, 
+                            repo["owner"]["login"], 
+                            repo["name"]
+                        ): repo for repo in repos
+                    }
+                    
+                    stats = []
+                    with tqdm(total=len(repos), desc="Fetching repository stats") as pbar:
+                        for future in concurrent.futures.as_completed(future_to_repo):
+                            repo_stats = future.result()
+                            if repo_stats:
+                                stats.append(repo_stats)
+                            pbar.update(1)
+
+            if stats:
+                display_stats(stats)
+                if args.format:
+                    output_name = None
+                    if args.output is not None:
+                        output_name = args.output if args.output != 'default' else f"github_stats_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+                    export_stats(stats, format=args.format, filename=output_name)
+            else:
+                print("[X] No statistics available to display")
+                sys.exit(1)
             
     except requests.exceptions.RequestException as e:
         print(f"\n[X] Error: {str(e)}")
@@ -421,6 +616,6 @@ def main():
     except Exception as e:
         print(f"\n[X] Unexpected error: {str(e)}")
         sys.exit(1)
-
+       
 if __name__ == "__main__":
     main()
