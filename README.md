@@ -8,10 +8,10 @@ There are two ways to use git-scanner: downloading the pre-built executable or r
 
 ### Using Pre-built Executables (Simplest)
 
-1. Download the executable for your system from our [latest release](v1.1.0):
-   - Linux: `git-scanner-linux` (41.2 MB)
-   - macOS: `git-scanner-macos` (28.9 MB)
-   - Windows: `git-scanner-windows.exe` (39.1 MB)
+1. Download the executable for your system from our [latest release](https://github.com/iotrustlab/git-scanner/releases/tag/v1.1.0):
+   - Linux: `git-scanner-linux` 
+   - macOS: `git-scanner-macos` 
+   - Windows: `git-scanner-windows.exe`
 
 2. For convenience, you might want to rename it to just `git-scanner`:
 
