@@ -1,124 +1,115 @@
 # git-scanner
 
-A friendly CLI tool that helps you analyze GitHub repositories and their issues. Perfect for getting insights into repository health and activity.
+A command-line tool for analyzing GitHub repositories and their issues to help assess repository health and activity.
 
-## Quick Start
+## Getting Started
+
+There are two ways to use git-scanner: downloading the pre-built executable or running from source.
+
+### Using Pre-built Executables (Simplest)
+
+1. Download the executable for your system from our [latest release](v1.1.0):
+   - Linux: `git-scanner-linux` (41.2 MB)
+   - macOS: `git-scanner-macos` (28.9 MB)
+   - Windows: `git-scanner-windows.exe` (39.1 MB)
+
+2. For convenience, you might want to rename it to just `git-scanner`:
+
+   ```bash
+   # Linux/macOS
+   mv git-scanner-linux git-scanner    # or git-scanner-macos on Mac
+   chmod +x git-scanner
+
+   # Windows
+   rename git-scanner-windows.exe git-scanner.exe
+   ```
+
+Note: We don't have an installer yet, so you'll need to run the executable from wherever you download it. You can move it to a convenient location or add its directory to your PATH.
+
+### Running From Source
+
+If you prefer to run from source:
 
 ```bash
-# Set up your environment
+# 1. Set up a virtual environment
 python -m venv .venv
-source .venv/bin/activate  # On Windows use: .venv\Scripts\activate
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
-# Install what you need
+# 2. Install dependencies
 pip install -r requirements.txt
-
-# Set your GitHub token
-export GITHUB_TOKEN='your_github_token'
-
-# Try it out!
-python git_scanner.py microsoft/vscode  # Look at a specific repo
-python git_scanner.py microsoft         # Check all repos in an organization
 ```
 
-## What Can It Do?
+## Before You Start
+
+You'll need a GitHub token. Export it as an environment variable:
+
+```bash
+export GITHUB_TOKEN='your_github_token'
+```
+
+## Basic Usage
+
+If you're using the executable:
+
+```bash
+./git-scanner turtlebot --repo turtlebot4   # Linux/macOS
+git-scanner.exe turtlebot --repo turtlebot4  # Windows
+```
+
+If you're running from source:
+
+```bash
+python git_scanner.py turtlebot --repo turtlebot4
+```
+
+## What You Can Do
 
 ### Repository Analysis
 
 ```bash
-# Basic repo scanning
-python git_scanner.py microsoft/vscode
+# Look at a specific repo
+git-scanner turtlebot --repo turtlebot4
 
-# Get stats for all repos and save to Excel
-python git_scanner.py microsoft --format excel --output microsoft_stats
+# Check all repos in an organization
+git-scanner turtlebot
 
 # Include private repos (if your token has access)
-python git_scanner.py microsoft --private
+git-scanner turtlebot --private
 ```
 
-### Issue Tracking (New!)
+### Issue Tracking
 
 ```bash
-# See all issues in a repo
-python git_scanner.py microsoft/vscode --repo vscode --issues
-
-# Export issues to a folder
-python git_scanner.py microsoft/vscode --repo vscode --issues --output vscode_issues
+# Export all issues from a repo
+git-scanner turtlebot --repo turtlebot4 --issues
 ```
 
-## Output Options
+### Different Output Formats
 
-You can get your results in several formats:
+```bash
+git-scanner turtlebot --format [table|csv|json|excel] --output filename
+```
 
-- **Table**: Nice clean console output (default)
-- **CSV**: Good for spreadsheets
-- **JSON**: Perfect for data processing
-- **Excel**: Professional reports with auto-formatted columns
-
-For issues, you'll get:
-
-- A metadata summary
-- NDJSON file with issue details
-- Separate folders for large issue content
-
-## What You'll See
+## What You'll Get
 
 ### Repository Stats
 
-- Stars, forks, and watchers
-- Open/closed issues and PRs
-- Average time to resolve issues
-- Latest activity timestamps
-- Languages used
-- Repository size
-- License info
+- Basic stats (stars, forks, watchers)
+- Issue and PR counts
+- Activity information
+- Technical details (languages, size, license)
 
-### Issue Details (New!)
+### Issue Details
 
-- Issue status (open/closed)
-- Creation and update dates
+- Status and timeline info
 - Labels and assignees
-- Full issue descriptions
-- Comment counts
-- Issue URLs
+- Full issue content
+- Related metadata
 
-## Setting Up
+## Good to Know
 
-1. You'll need:
-   - Python 3.8 or newer
-   - A GitHub token (get it from GitHub → Settings → Developer settings → Tokens)
+- The tool handles GitHub's rate limits automatically
+- For big organizations, it might take a while to fetch everything
+- Hit `Ctrl+C` if you need to stop
 
-2. Set up your token:
-
-   ```bash
-   export GITHUB_TOKEN='your_token'
-   # or use it directly:
-   python git_scanner.py microsoft --token your_token
-   ```
-
-## Common Commands
-
-```bash
-# Basic repository scanning
-python git_scanner.py microsoft/vscode
-
-# All commands available
-python git_scanner.py --help
-
-# Repository stats with different outputs
-python git_scanner.py microsoft --format csv
-python git_scanner.py microsoft --format json
-python git_scanner.py microsoft --format excel
-
-# Working with issues
-python git_scanner.py microsoft/vscode --repo vscode --issues
-```
-
-## Tips
-
-- Use `--private` if you need to see private repositories
-- The tool handles rate limiting automatically
-- For large organizations, be patient - it'll fetch everything systematically
-- Issue exports are organized to handle large amounts of content
-- Use `Ctrl+C` to stop if you need to
-
-That's it! The tool aims to be simple but powerful. If you run into any problems or need help, feel free to open an issue on GitHub.
+Having trouble? Found a bug? Please open an issue on GitHub - we'd love to help!
